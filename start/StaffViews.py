@@ -13,59 +13,65 @@ from django.views.decorators.csrf import csrf_exempt
 from start.models import Subject, SessionYearModel, Student, Attendance, AttendanceReport, \
     LeaveReportStaff, Staff, FeedBackStaff, CustomUser, Courses, NotificationStaff, StudentResult, OnlineClassRoom
 
-from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render
-from .models import Subject, Courses, Student, Attendance, LeaveReportStaff, AttendanceReport
-@login_required
+from django.http import HttpResponse
+from start.models import Staff
+
 def staff_home(request):
-    # Fetch all subjects taught by the staff
-    subjects = Subject.objects.filter(staff_id=request.user.pk)
+    try:
+        staff = Staff.objects.get(admin=request.user.id)
+    except Staff.DoesNotExist:
+        return HttpResponse("You are not authorized to access this page.")
 
-    # Get unique course IDs
-    final_course = set(subject.course.id for subject in subjects)
+    # For Fetch All Student Under Staff
+    subjects = Subject.objects.filter(staff_id=request.user.id)
+    course_id_list = []
+    for subject in subjects:
+        course = Courses.objects.get(id=subject.course_id.id)
+        course_id_list.append(course.id)
 
-    # Count students in the courses taught by the staff
+    final_course = []
+    # removing Duplicate Course ID
+    for course_id in course_id_list:
+        if course_id not in final_course:
+            final_course.append(course_id)
+
     students_count = Student.objects.filter(course_id__in=final_course).count()
 
-    # Count total attendance across all subjects
-    attendance_count = Attendance.objects.filter(subject__in=subjects).count()
+    # Fetch All Attendance Count
+    attendance_count = Attendance.objects.filter(subject_id__in=subjects).count()
 
-    # Count approved leave requests for the staff
-    staff = Staff.objects.get(admin=request.user)
-    leave_count = LeaveReportStaff.objects.filter(staff=staff, leave_status=True).count()
-
-    # Count total number of subjects
+    # Fetch All Approve Leave
+    staff = Staff.objects.get(admin=request.user.id)
+    leave_count = LeaveReportStaff.objects.filter(staff_id=staff.id, leave_status=1).count()
     subject_count = subjects.count()
 
-    # Fetch attendance data by subject
-    subject_list = [subject.subject_name for subject in subjects]
-    attendance_list = [Attendance.objects.filter(subject=subject).count() for subject in subjects]
+    # Fetch Attendance Data by Subject
+    subject_list = []
+    attendance_list = []
+    for subject in subjects:
+        attendance_count1 = Attendance.objects.filter(subject_id=subject.id).count()
+        subject_list.append(subject.subject_name)
+        attendance_list.append(attendance_count1)
 
-    # Fetch attendance data for students
+    students_attendance = Student.objects.filter(course_id__in=final_course)
     student_list = []
     student_list_attendance_present = []
     student_list_attendance_absent = []
-
-    for student in Student.objects.filter(course_id__in=final_course):
-        attendance_present_count = AttendanceReport.objects.filter(status=True, student=student).count()
-        attendance_absent_count = AttendanceReport.objects.filter(status=False, student=student).count()
+    for student in students_attendance:
+        attendance_present_count = AttendanceReport.objects.filter(status=True, student_id=student.id).count()
+        attendance_absent_count = AttendanceReport.objects.filter(status=False, student_id=student.id).count()
         student_list.append(student.admin.username)
         student_list_attendance_present.append(attendance_present_count)
         student_list_attendance_absent.append(attendance_absent_count)
 
-    return render(request, "staff_template/staff_home_template.html", {
-        "students_count": students_count,
-        "attendance_count": attendance_count,
-        "leave_count": leave_count,
-        "subject_count": subject_count,
-        "subject_list": subject_list,
-        "attendance_list": attendance_list,
-        "student_list": student_list,
-        "present_list": student_list_attendance_present,
-        "absent_list": student_list_attendance_absent
-    })
-
+    return render(request, "staff_template/staff_home_template.html",
+                  {"students_count": students_count, "attendance_count": attendance_count,
+                   "leave_count": leave_count, "subject_count": subject_count,
+                   "subject_list": subject_list, "attendance_list": attendance_list,
+                   "student_list": student_list, "present_list": student_list_attendance_present,
+                   "absent_list": student_list_attendance_absent})
 
 def staff_take_attendance(request):
     subjects=Subject.objects.filter(staff_id=request.user.id)
@@ -95,7 +101,7 @@ def save_attendance_data(request):
     session_year_id=request.POST.get("session_year_id")
 
     subject_model=Subject.objects.get(id=subject_id)
-    session_model=SessionYearModel.object.get(id=session_year_id)
+    session_model=SessionYearModel.objects.get(id=session_year_id)
     json_sstudent=json.loads(student_ids)
     #print(data[0]['id'])
 
@@ -311,7 +317,7 @@ def start_live_classroom_process(request):
     subject=request.POST.get("subject")
 
     subject_obj=Subject.objects.get(id=subject)
-    session_obj=SessionYearModel.object.get(id=session_year)
+    session_obj=SessionYearModel.objects.get(id=session_year)
     checks=OnlineClassRoom.objects.filter(subject=subject_obj,session_years=session_obj,is_active=True).exists()
     if checks:
         data=OnlineClassRoom.objects.get(subject=subject_obj,session_years=session_obj,is_active=True)

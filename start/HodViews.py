@@ -300,7 +300,7 @@ def edit_student_save(request):
 
                 student=Student.objects.get(admin=student_id)
                 student.address=address
-                session_year = SessionYearModel.object.get(id=session_year_id)
+                session_year = SessionYearModel.objects.get(id=session_year_id)
                 student.session_year_id = session_year
                 student.gender=sex
                 course=Courses.objects.get(id=course_id)
@@ -479,7 +479,7 @@ def staff_disapprove_leave(request,leave_id):
 
 def admin_view_attendance(request):
     subjects=Subject.objects.all()
-    session_year_id=SessionYearModel.object.all()
+    session_year_id=SessionYearModel.objects.all()
     return render(request,"hod_template/admin_view_attendance.html",{"subjects":subjects,"session_year_id":session_year_id})
 
 @csrf_exempt
@@ -487,7 +487,7 @@ def admin_get_attendance_dates(request):
     subject=request.POST.get("subject")
     session_year_id=request.POST.get("session_year_id")
     subject_obj=Subject.objects.get(id=subject)
-    session_year_obj=SessionYearModel.object.get(id=session_year_id)
+    session_year_obj=SessionYearModel.objects.get(id=session_year_id)
     attendance=Attendance.objects.filter(subject_id=subject_obj,session_year_id=session_year_obj)
     attendance_obj=[]
     for attendance_single in attendance:

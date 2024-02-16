@@ -42,6 +42,7 @@ def doLogin(request):
         else:
             messages.error(request, "Invalid Login Details")
             return HttpResponseRedirect("/")
+
 def GetUserDetails(request):
     if request.user!=None:
         return HttpResponse("User : "+request.user.email+" usertype : "+str(request.user.user_type))
