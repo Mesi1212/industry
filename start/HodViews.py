@@ -73,6 +73,8 @@ def admin_home(request):
 def add_staff(request):
     return render(request,"hod_template/add_staff_template.html")
 
+from django.contrib.auth.hashers import make_password
+
 def add_staff_save(request):
     if request.method != "POST":
         return HttpResponse("Method Not Allowed")
@@ -81,7 +83,7 @@ def add_staff_save(request):
         last_name = request.POST.get("last_name")
         username = request.POST.get("username")
         email = request.POST.get("email")
-        password = request.POST.get("password")
+        password = make_password(request.POST.get("password"))  # Hash the password
         address = request.POST.get("address")
         
         try:

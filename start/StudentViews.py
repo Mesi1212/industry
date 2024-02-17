@@ -23,10 +23,17 @@ def student_home(request):
             attendance_total = AttendanceReport.objects.filter(student_id=student_obj).count()
             attendance_present = AttendanceReport.objects.filter(student_id=student_obj, status=True).count()
             attendance_absent = AttendanceReport.objects.filter(student_id=student_obj, status=False).count()
-            course = Courses.objects.get(id=student_obj.course_id.id)
+            course = Courses.objects.get(id=student_obj.course_id)
             subjects = Subject.objects.filter(course_id=course).count()
             subjects_data = Subject.objects.filter(course_id=course)
-            session_obj = SessionYearModel.objects.get(id=student_obj.session_year_id.id)
+            from .models import SessionYearModel
+
+# Assuming student_obj is a Student instance
+            session_obj = SessionYearModel.objects.get(
+                session_start_year=student_obj.session_start_year,
+                session_end_year=student_obj.session_end_year
+)
+
             class_room = OnlineClassRoom.objects.filter(subject__in=subjects_data, is_active=True, session_years=session_obj)
 
             subject_name = []

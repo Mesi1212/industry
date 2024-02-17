@@ -28,10 +28,10 @@ def staff_home(request):
     subjects = Subject.objects.filter(staff_id=request.user.id)
     course_id_list = []
     for subject in subjects:
-        course = Courses.objects.get(id=subject.course_id.id)
-        course_id_list.append(course.id)
+     course_id_list.append(subject.course_id)
 
-    final_course = []
+     final_course = course_id_list
+
     # removing Duplicate Course ID
     for course_id in course_id_list:
         if course_id not in final_course:
