@@ -78,20 +78,27 @@ def staff_take_attendance(request):
     session_years=SessionYearModel.objects.all()
     return render(request,"staff_template/staff_take_attendance.html",{"subjects":subjects,"session_years":session_years})
 
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import Student, Courses, SessionYearModel
+
 @csrf_exempt
 def get_students(request):
-    subject_id=request.POST.get("subject")
-    session_year=request.POST.get("session_year")
+    subject_id = request.POST.get("subject")
+    session_year_id = request.POST.get("session_year")
 
-    subject=Subject.objects.get(id=subject_id)
-    session_model=SessionYearModel.objects.get(id=session_year)
-    students=Student.objects.filter(course_id=subject.course_id,session_year_id=session_model)
-    list_data=[]
+    subject = get_object_or_404(Courses, id=subject_id)
+    session_model = get_object_or_404(SessionYearModel, id=session_year_id)
+
+    students = Student.objects.filter(course=subject, session_start_year=session_model)
+    list_data = []
 
     for student in students:
-        data_small={"id":student.admin.id,"name":student.admin.first_name+" "+student.admin.last_name}
+        data_small = {"id": student.admin.id, "name": student.admin.first_name + " " + student.admin.last_name}
         list_data.append(data_small)
-    return JsonResponse(json.dumps(list_data),content_type="application/json",safe=False)
+
+    return JsonResponse(list_data, safe=False)
+
 
 @csrf_exempt
 def save_attendance_data(request):

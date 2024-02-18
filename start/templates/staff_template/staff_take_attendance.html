@@ -93,9 +93,10 @@ Take Attendance
                 $("#student_data").html(div_data);
 
             })
-            .fail(function(){
-                alert("Error in Fetching Student")
-            })
+            .fail(function(xhr, status, error) {
+              var errorMessage = xhr.responseText; // Get the specific error message from the response
+              alert("Error in Fetching Student: " + errorMessage);
+          })
 
 
             $(document).on("click","#save_attendance",function(){
