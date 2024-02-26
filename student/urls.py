@@ -22,8 +22,10 @@ from django.views.generic import TemplateView
 from start import views, HodViews, StaffViews, StudentViews
 ##from start.EditResultVIewClass import EditResultViewClass
 from student import settings
+from start import StaffViews
 
 urlpatterns = [
+    path('fetch-students/',  StaffViews.get_students, name='fetch_students'),
     path('demo',views.showDemoPage),
     path('signup_admin',views.signup_admin,name="signup_admin"),
     path('signup_student',views.signup_student,name="signup_student"),

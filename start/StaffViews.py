@@ -80,24 +80,26 @@ def staff_take_attendance(request):
 
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from .models import Student, Courses, SessionYearModel
+from .models import Subject, SessionYearModel, Student
 
-@csrf_exempt
 def get_students(request):
-    subject_id = request.POST.get("subject")
-    session_year_id = request.POST.get("session_year")
+    if request.method == 'POST':
+        subject_id = request.POST.get("subject")
+        session_year_id = request.POST.get("session_year")
 
-    subject = get_object_or_404(Courses, id=subject_id)
-    session_model = get_object_or_404(SessionYearModel, id=session_year_id)
+        if not subject_id or not session_year_id:
+            return JsonResponse({'error': 'Subject ID or Session Year ID not provided.'}, status=400)
 
-    students = Student.objects.filter(course=subject, session_start_year=session_model)
-    list_data = []
+        subject = get_object_or_404(Subject, id=subject_id)
+        session_model = get_object_or_404(SessionYearModel, id=session_year_id)
 
-    for student in students:
-        data_small = {"id": student.admin.id, "name": student.admin.first_name + " " + student.admin.last_name}
-        list_data.append(data_small)
+        students = Student.objects.filter(course=subject.course, session_start_year=session_model.session_start_year)
 
-    return JsonResponse(list_data, safe=False)
+        list_data = [{"id": student.admin.id, "name": student.admin.first_name + " " + student.admin.last_name} for student in students]
+
+        return JsonResponse(list_data, safe=False)
+
+    return JsonResponse({'error': 'Method not allowed.'}, status=405)
 
 
 @csrf_exempt
