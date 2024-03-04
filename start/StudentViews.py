@@ -1,5 +1,5 @@
 import datetime
-
+#this is student views
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
