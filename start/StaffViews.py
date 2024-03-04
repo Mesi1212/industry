@@ -82,24 +82,42 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from .models import Subject, SessionYearModel, Student
 
+from datetime import date
+
+# Assuming session_year_id is the ID of the session year
 def get_students(request):
-    if request.method == 'POST':
-        subject_id = request.POST.get("subject")
-        session_year_id = request.POST.get("session_year")
+    subject_id = request.POST.get("subject")
+    session_year_id = request.POST.get("session_year")
 
-        if not subject_id or not session_year_id:
-            return JsonResponse({'error': 'Subject ID or Session Year ID not provided.'}, status=400)
+    if not session_year_id:
+        return JsonResponse({"error": "Session year is required"}, status=400)
 
-        subject = get_object_or_404(Subject, id=subject_id)
-        session_model = get_object_or_404(SessionYearModel, id=session_year_id)
+    try:
+        subject = Subject.objects.get(id=subject_id)
+        session_year = SessionYearModel.objects.get(id=session_year_id)
 
-        students = Student.objects.filter(course=subject.course, session_start_year=session_model.session_start_year)
+        # Filter students whose session start year is less than or equal to the session year
+        # and session end year is greater than or equal to the session year
+        students = Student.objects.filter(
+            course_id=subject.course_id,
+            session_start_year__lte=session_year.session_start_year,
+            session_end_year__gte=session_year.session_end_year
+        )
 
-        list_data = [{"id": student.admin.id, "name": student.admin.first_name + " " + student.admin.last_name} for student in students]
+        list_data = [{"id": student.admin.id, "name": student.admin.first_name + " " + student.admin.last_name}
+                     for student in students]
 
-        return JsonResponse(list_data, safe=False)
+        return JsonResponse(json.dumps(list_data), content_type="application/json", safe=False)
 
-    return JsonResponse({'error': 'Method not allowed.'}, status=405)
+    except Subject.DoesNotExist:
+        return JsonResponse({"error": "Subject not found"}, status=404)
+
+    except SessionYearModel.DoesNotExist:
+        return JsonResponse({"error": "Session year not found"}, status=404)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 
 @csrf_exempt
