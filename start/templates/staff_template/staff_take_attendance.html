@@ -15,11 +15,11 @@ Take Attendance
                       </div>
                       <!-- /.card-header -->
                       <!-- form start -->
-                      <form action="{% url 'fetch_students' %}" method="post">
+                      <form action="{% url 'fetch_students' %}" method="post" id="attendance-form">
                           {% csrf_token %}
                           <div class="card-body">
                               <div class="form-group">
-                                  <label>Subject</label>
+                                  <label for="subject">Subject</label>
                                   <select class="form-control" name="subject" id="subject">
                                       {% for subject in subjects %}
                                           <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
@@ -27,7 +27,7 @@ Take Attendance
                                   </select>
                               </div>
                               <div class="form-group">
-                                  <label>Session Year</label>
+                                  <label for="session_year">Session Year</label>
                                   <select class="form-control" name="session_year" id="session_year">
                                       {% for session_year in session_years %}
                                           <option value="{{ session_year.id }}">{{ session_year.session_start_year }} TO {{ session_year.session_end_year }}</option>
@@ -63,4 +63,27 @@ Take Attendance
       </div>
     </section>
     <!-- /.content -->
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#attendance-form').on('submit', function(e) {
+                e.preventDefault(); // Prevent the form from submitting normally
+                var formData = $(this).serialize(); // Serialize the form data
+                $.ajax({
+                    type: 'POST',
+                    url: $(this).attr('action'),
+                    data: formData,
+                    success: function(data) {
+                        $('#student_data').html(data); // Update the student data div with the fetched data
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error:', error);
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock main_content %}
