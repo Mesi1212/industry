@@ -1,0 +1,73 @@
+{% extends 'staff_template/base_template.html' %}
+{% block page_title %}
+View Student Attendance
+{% endblock page_title %}
+{% block main_content %}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Student Attendance</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in student_data %}
+                                <tr>
+                                    <td>{{ student.name }}</td>
+                                    <td><input type="checkbox" name="attendance_status" {% if student.status %} checked {% endif %}></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <button id="save_attendance" class="btn btn-success">Save Attendance</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(document).ready(function(){
+        $("#save_attendance").click(function(){
+            var attendance_data = [];
+            $("input[name='attendance_status']").each(function(){
+                attendance_data.push({
+                    "id": $(this).data("id"),
+                    "status": $(this).prop("checked")
+                });
+            });
+
+            $.ajax({
+                url: '{% url 'save_updateattendance_data' %}',
+                type: 'POST',
+                data: {
+                    "attendance_date": "{{ attendance.id }}",
+                    "attendance_data": JSON.stringify(attendance_data)
+                },
+                success: function(response){
+                    if(response == "OK"){
+                        alert("Attendance Saved Successfully");
+                    }else{
+                        alert("Failed to Save Attendance");
+                    }
+                },
+                error: function(){
+                    alert("Error occurred while saving attendance");
+                }
+            });
+        });
+    });
+</script>
+{% endblock main_content %}

@@ -85,6 +85,8 @@ from .models import Subject, SessionYearModel, Student
 from datetime import date
 
 # Assuming session_year_id is the ID of the session year
+# Updated get_students view function
+@csrf_exempt
 def get_students(request):
     subject_id = request.POST.get("subject")
     session_year_id = request.POST.get("session_year")
@@ -118,32 +120,46 @@ def get_students(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
+# Updated save_attendance_data view function
+from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .models import Subject, SessionYearModel, Attendance, AttendanceReport
 
 @csrf_exempt
 def save_attendance_data(request):
-    student_ids=request.POST.get("student_ids")
-    subject_id=request.POST.get("subject_id")
-    attendance_date=request.POST.get("attendance_date")
-    session_year_id=request.POST.get("session_year_id")
+    if request.method == 'POST':
+        student_ids = request.POST.get("student_ids")
+        subject_id = request.POST.get("subject_id")
+        attendance_date = request.POST.get("attendance_date")
+        session_year_id = request.POST.get("session_year_id")
 
-    subject_model=Subject.objects.get(id=subject_id)
-    session_model=SessionYearModel.objects.get(id=session_year_id)
-    json_sstudent=json.loads(student_ids)
-    #print(data[0]['id'])
+        try:
+            subject_model = Subject.objects.get(id=subject_id)
+            session_model = SessionYearModel.objects.get(id=session_year_id)
+            json_students = json.loads(student_ids)
 
+            attendance = Attendance(subject_id=subject_model, attendance_date=attendance_date, session_year_id=session_model)
+            attendance.save()
 
-    try:
-        attendance=Attendance(subject_id=subject_model,attendance_date=attendance_date,session_year_id=session_model)
-        attendance.save()
+            for student_data in json_students:
+                student = Student.objects.get(admin=student_data['id'])
+                attendance_report = AttendanceReport(student_id=student, attendance_id=attendance, status=student_data['status'])
+                attendance_report.save()
 
-        for stud in json_sstudent:
-             student=Student.objects.get(admin=stud['id'])
-             attendance_report=AttendanceReport(student_id=student,attendance_id=attendance,status=stud['status'])
-             attendance_report.save()
-        return HttpResponse("OK")
-    except:
-        return HttpResponse("ERR")
+            return HttpResponse("OK")
+        except Subject.DoesNotExist:
+            return JsonResponse({'error': 'Subject does not exist'}, status=400)
+        except SessionYearModel.DoesNotExist:
+            return JsonResponse({'error': 'Session year does not exist'}, status=400)
+        except Student.DoesNotExist:
+            return JsonResponse({'error': 'Student does not exist'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return HttpResponse("Invalid request method")
+
 
 def staff_update_attendance(request):
     subjects=Subject.objects.filter(staff_id=request.user.id)
